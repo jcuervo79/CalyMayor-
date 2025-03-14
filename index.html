@@ -254,6 +254,14 @@
                     </div>
                     
                     <div class="form-group">
+                        <label for="monthlyHours">Horas Procesadas al Mes:</label>
+                        <div class="slider-container">
+                            <input type="range" id="monthlyHours" class="slider" min="1000" max="20000" step="1000" value="1000">
+                            <span id="monthlyHoursValue" class="slider-value">1,000 horas</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
                         <label for="annualProjects">Proyectos Anuales:</label>
                         <div class="slider-container">
                             <input type="range" id="annualProjects" class="slider" min="10" max="100" step="5" value="40">
@@ -293,13 +301,23 @@
                         </div>
                         
                         <div class="result-item">
-                            <h3>Ganancia anual potencial (precio actual):</h3>
-                            <p id="currentAnnualProfit">$ 1,569,600,000</p>
+                            <h3>Utilidad mensual (precio actual):</h3>
+                            <p id="currentMonthlyProfit">$ 131,766,667</p>
                         </div>
                         
                         <div class="result-item">
-                            <h3>Ganancia anual potencial (precio objetivo):</h3>
-                            <p id="targetAnnualProfit">$ 969,600,000</p>
+                            <h3>Utilidad mensual (precio objetivo):</h3>
+                            <p id="targetMonthlyProfit">$ 87,766,667</p>
+                        </div>
+                        
+                        <div class="result-item">
+                            <h3>Utilidad anual (precio actual):</h3>
+                            <p id="currentAnnualProfit">$ 1,581,200,000</p>
+                        </div>
+                        
+                        <div class="result-item">
+                            <h3>Utilidad anual (precio objetivo):</h3>
+                            <p id="targetAnnualProfit">$ 1,053,200,000</p>
                         </div>
                     </div>
                 </div>
@@ -355,6 +373,7 @@
         let hourlyProcessingCost = 6;
         let exchangeRate = 4000;
         let hoursPerVideo = 24;
+        let monthlyHours = 1000;
         let annualProjects = 40;
         let stationsPerProject = 10;
         
@@ -363,6 +382,8 @@
         let currentMargin = 0;
         let targetMargin = 0;
         let annualVolume = 0;
+        let currentMonthlyProfit = 0;
+        let targetMonthlyProfit = 0;
         let currentAnnualProfit = 0;
         let targetAnnualProfit = 0;
         let priceRange = [];
@@ -373,6 +394,7 @@
         const hourlyProcessingCostSlider = document.getElementById('hourlyProcessingCost');
         const exchangeRateSlider = document.getElementById('exchangeRate');
         const hoursPerVideoSlider = document.getElementById('hoursPerVideo');
+        const monthlyHoursSlider = document.getElementById('monthlyHours');
         const annualProjectsSlider = document.getElementById('annualProjects');
         const stationsPerProjectSlider = document.getElementById('stationsPerProject');
         
@@ -381,6 +403,7 @@
         const hourlyProcessingCostValue = document.getElementById('hourlyProcessingCostValue');
         const exchangeRateValue = document.getElementById('exchangeRateValue');
         const hoursPerVideoValue = document.getElementById('hoursPerVideoValue');
+        const monthlyHoursValue = document.getElementById('monthlyHoursValue');
         const annualProjectsValue = document.getElementById('annualProjectsValue');
         const stationsPerProjectValue = document.getElementById('stationsPerProjectValue');
         
@@ -388,6 +411,8 @@
         const annualVolumeElement = document.getElementById('annualVolume');
         const currentMarginElement = document.getElementById('currentMargin');
         const targetMarginElement = document.getElementById('targetMargin');
+        const currentMonthlyProfitElement = document.getElementById('currentMonthlyProfit');
+        const targetMonthlyProfitElement = document.getElementById('targetMonthlyProfit');
         const currentAnnualProfitElement = document.getElementById('currentAnnualProfit');
         const targetAnnualProfitElement = document.getElementById('targetAnnualProfit');
         
@@ -411,17 +436,26 @@
         
         // Función para calcular todos los valores derivados
         function calculateValues() {
-            // Costo de procesamiento en COP
-            processingCostCOP = hourlyProcessingCost * hoursPerVideo * exchangeRate;
+            // Costo de procesamiento en COP por hora de video
+            const hourlyProcessingCostCOP = hourlyProcessingCost * exchangeRate;
+            processingCostCOP = hourlyProcessingCostCOP * hoursPerVideo;
             
             // Márgenes
             currentMargin = ((currentPrice - processingCostCOP) / currentPrice) * 100;
             targetMargin = ((targetPrice - processingCostCOP) / targetPrice) * 100;
             
-            // Volumen anual y ganancias
+            // Utilidad basada en horas mensuales y anuales
+            const hourlyProfitCurrent = (currentPrice / hoursPerVideo) - hourlyProcessingCostCOP;
+            const hourlyProfitTarget = (targetPrice / hoursPerVideo) - hourlyProcessingCostCOP;
+            
+            currentMonthlyProfit = hourlyProfitCurrent * monthlyHours;
+            targetMonthlyProfit = hourlyProfitTarget * monthlyHours;
+            
+            currentAnnualProfit = currentMonthlyProfit * 12;
+            targetAnnualProfit = targetMonthlyProfit * 12;
+            
+            // Volumen anual para referencia
             annualVolume = annualProjects * stationsPerProject;
-            currentAnnualProfit = (currentPrice - processingCostCOP) * annualVolume;
-            targetAnnualProfit = (targetPrice - processingCostCOP) * annualVolume;
             
             // Datos para análisis de sensibilidad
             const minPrice = processingCostCOP * 1.1; // Mínimo 10% de margen
@@ -432,7 +466,10 @@
             for (let i = 0; i <= 10; i++) {
                 const price = minPrice + (step * i);
                 const margin = ((price - processingCostCOP) / price) * 100;
-                const annualProfit = (price - processingCostCOP) * annualVolume;
+                const hourlyProfit = (price / hoursPerVideo) - hourlyProcessingCostCOP;
+                const monthlyProfit = hourlyProfit * monthlyHours;
+                const annualProfit = monthlyProfit * 12;
+                
                 priceRange.push({
                     price: Math.round(price),
                     margin: Math.round(margin * 10) / 10,
@@ -449,6 +486,7 @@
             hourlyProcessingCostValue.textContent = '$ ' + hourlyProcessingCost.toFixed(2);
             exchangeRateValue.textContent = exchangeRate.toLocaleString();
             hoursPerVideoValue.textContent = hoursPerVideo + ' horas';
+            monthlyHoursValue.textContent = monthlyHours.toLocaleString() + ' horas';
             annualProjectsValue.textContent = annualProjects.toString();
             stationsPerProjectValue.textContent = stationsPerProject.toString();
             
@@ -461,6 +499,9 @@
             
             targetMarginElement.textContent = formatPercent(targetMargin);
             targetMarginElement.className = targetMargin > 50 ? 'green' : 'yellow';
+            
+            currentMonthlyProfitElement.textContent = formatCurrency(currentMonthlyProfit);
+            targetMonthlyProfitElement.textContent = formatCurrency(targetMonthlyProfit);
             
             currentAnnualProfitElement.textContent = formatCurrency(currentAnnualProfit);
             targetAnnualProfitElement.textContent = formatCurrency(targetAnnualProfit);
@@ -728,6 +769,12 @@
         
         hoursPerVideoSlider.addEventListener('input', function() {
             hoursPerVideo = parseInt(this.value);
+            calculateValues();
+            updateUI();
+        });
+        
+        monthlyHoursSlider.addEventListener('input', function() {
+            monthlyHours = parseInt(this.value);
             calculateValues();
             updateUI();
         });
