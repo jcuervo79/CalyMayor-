@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Margen - JavaScript Nativo</title>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.5;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        
+        /* Card styles */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background-color: #f8fafc;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .card-body {
+            padding: 24px;
+        }
+        
+        /* Formulario y deslizadores */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .slider {
+            flex-grow: 1;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            min-width: 120px;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        /* Grid para formulario */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        /* Resultados */
+        .results-container {
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        @media (min-width: 768px) {
+            .results-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .result-item h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .result-item p {
+            font-size: 16px;
+        }
+        
+        .green {
+            color: #059669;
+            font-weight: bold;
+        }
+        
+        .yellow {
+            color: #d97706;
+            font-weight: bold;
+        }
+        
+        /* Gráfico */
+        .chart-container {
+            margin-top: 24px;
+            height: 400px;
+            position: relative;
+        }
+        
+        canvas {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: white;
+        }
+        
+        /* Tabla de datos */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+        
+        .data-table th, .data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: right;
+        }
+        
+        .data-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: #f1f5f9;
+        }
+        
+        /* Instrucciones */
+        .instructions {
+            margin-top: 16px;
+        }
+        
+        .instructions ul {
+            margin-left: 24px;
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Calculadora de Margen para Servicio de Análisis de Video de Tráfico</h2>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Parámetros de Entrada</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="currentPrice">Precio Actual:</label>
+                        <div class="slider-container">
+                            <input type="range" id="currentPrice" class="slider" min="1000000" max="6000000" step="100000" value="4500000">
+                            <span id="currentPriceValue" class="slider-value">$ 4,500,000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="targetPrice">Precio Objetivo:</label>
+                        <div class="slider-container">
+                            <input type="range" id="targetPrice" class="slider" min="1000000" max="6000000" step="100000" value="3000000">
+                            <span id="targetPriceValue" class="slider-value">$ 3,000,000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hourlyProcessingCost">Costo Procesamiento (USD/hora):</label>
+                        <div class="slider-container">
+                            <input type="range" id="hourlyProcessingCost" class="slider" min="1" max="20" step="0.5" value="6">
+                            <span id="hourlyProcessingCostValue" class="slider-value">$ 6.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="exchangeRate">Tasa de Cambio (COP/USD):</label>
+                        <div class="slider-container">
+                            <input type="range" id="exchangeRate" class="slider" min="3000" max="5000" step="100" value="4000">
+                            <span id="exchangeRateValue" class="slider-value">4,000</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hoursPerVideo">Horas por Video:</label>
+                        <div class="slider-container">
+                            <input type="range" id="hoursPerVideo" class="slider" min="6" max="24" step="6" value="24">
+                            <span id="hoursPerVideoValue" class="slider-value">24 horas</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="annualProjects">Proyectos Anuales:</label>
+                        <div class="slider-container">
+                            <input type="range" id="annualProjects" class="slider" min="10" max="100" step="5" value="40">
+                            <span id="annualProjectsValue" class="slider-value">40</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stationsPerProject">Estaciones por Proyecto:</label>
+                        <div class="slider-container">
+                            <input type="range" id="stationsPerProject" class="slider" min="1" max="50" step="1" value="10">
+                            <span id="stationsPerProjectValue" class="slider-value">10</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="results-container">
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <h3>Costo total de procesamiento:</h3>
+                            <p id="processingCost">$ 576,000 (144 USD)</p>
+                        </div>
+                        
+                        <div class="result-item">
+                            <h3>Volumen anual:</h3>
+                            <p id="annualVolume">400 estaciones de 24h</p>
+                        </div>
+                        
+                        <div class="result-item">
+                            <h3>Margen actual:</h3>
+                            <p id="currentMargin" class="green">87.2%</p>
+                        </div>
+                        
+                        <div class="result-item">
+                            <h3>Margen con precio objetivo:</h3>
+                            <p id="targetMargin" class="green">80.8%</p>
+                        </div>
+                        
+                        <div class="result-item">
+                            <h3>Ganancia anual potencial (precio actual):</h3>
+                            <p id="currentAnnualProfit">$ 1,569,600,000</p>
+                        </div>
+                        
+                        <div class="result-item">
+                            <h3>Ganancia anual potencial (precio objetivo):</h3>
+                            <p id="targetAnnualProfit">$ 969,600,000</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Análisis de Sensibilidad de Precios</h3>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="chart" width="1100" height="400"></canvas>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Precio (COP)</th>
+                            <th>Margen (%)</th>
+                            <th>Ganancia Anual (M COP)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Datos generados dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Instrucciones de uso</h3>
+            </div>
+            <div class="card-body">
+                <div class="instructions">
+                    <p>Este simulador te permite ajustar diferentes parámetros para evaluar la viabilidad económica del servicio de análisis de video para conteo de tráfico.</p>
+                    <ul>
+                        <li>Utiliza los deslizadores para modificar los valores de entrada.</li>
+                        <li>Observa cómo cambian los márgenes y ganancias potenciales en tiempo real.</li>
+                        <li>El gráfico muestra la relación entre precio, margen y ganancia anual.</li>
+                    </ul>
+                    <p>Para guardar este simulador, guarda esta página HTML completa y podrás abrirla en cualquier navegador sin necesidad de conexión a internet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables de entrada
+        let currentPrice = 4500000;
+        let targetPrice = 3000000;
+        let hourlyProcessingCost = 6;
+        let exchangeRate = 4000;
+        let hoursPerVideo = 24;
+        let annualProjects = 40;
+        let stationsPerProject = 10;
+        
+        // Valores calculados
+        let processingCostCOP = 0;
+        let currentMargin = 0;
+        let targetMargin = 0;
+        let annualVolume = 0;
+        let currentAnnualProfit = 0;
+        let targetAnnualProfit = 0;
+        let priceRange = [];
+        
+        // Referencias a elementos del DOM
+        const currentPriceSlider = document.getElementById('currentPrice');
+        const targetPriceSlider = document.getElementById('targetPrice');
+        const hourlyProcessingCostSlider = document.getElementById('hourlyProcessingCost');
+        const exchangeRateSlider = document.getElementById('exchangeRate');
+        const hoursPerVideoSlider = document.getElementById('hoursPerVideo');
+        const annualProjectsSlider = document.getElementById('annualProjects');
+        const stationsPerProjectSlider = document.getElementById('stationsPerProject');
+        
+        const currentPriceValue = document.getElementById('currentPriceValue');
+        const targetPriceValue = document.getElementById('targetPriceValue');
+        const hourlyProcessingCostValue = document.getElementById('hourlyProcessingCostValue');
+        const exchangeRateValue = document.getElementById('exchangeRateValue');
+        const hoursPerVideoValue = document.getElementById('hoursPerVideoValue');
+        const annualProjectsValue = document.getElementById('annualProjectsValue');
+        const stationsPerProjectValue = document.getElementById('stationsPerProjectValue');
+        
+        const processingCostElement = document.getElementById('processingCost');
+        const annualVolumeElement = document.getElementById('annualVolume');
+        const currentMarginElement = document.getElementById('currentMargin');
+        const targetMarginElement = document.getElementById('targetMargin');
+        const currentAnnualProfitElement = document.getElementById('currentAnnualProfit');
+        const targetAnnualProfitElement = document.getElementById('targetAnnualProfit');
+        
+        const tableBody = document.getElementById('tableBody');
+        const canvas = document.getElementById('chart');
+        const ctx = canvas.getContext('2d');
+        
+        // Función para formatear moneda
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+        
+        // Función para formatear porcentaje
+        function formatPercent(value) {
+            return value.toFixed(1) + '%';
+        }
+        
+        // Función para calcular todos los valores derivados
+        function calculateValues() {
+            // Costo de procesamiento en COP
+            processingCostCOP = hourlyProcessingCost * hoursPerVideo * exchangeRate;
+            
+            // Márgenes
+            currentMargin = ((currentPrice - processingCostCOP) / currentPrice) * 100;
+            targetMargin = ((targetPrice - processingCostCOP) / targetPrice) * 100;
+            
+            // Volumen anual y ganancias
+            annualVolume = annualProjects * stationsPerProject;
+            currentAnnualProfit = (currentPrice - processingCostCOP) * annualVolume;
+            targetAnnualProfit = (targetPrice - processingCostCOP) * annualVolume;
+            
+            // Datos para análisis de sensibilidad
+            const minPrice = processingCostCOP * 1.1; // Mínimo 10% de margen
+            const maxPrice = currentPrice * 1.2; // Máximo 20% sobre precio actual
+            const step = (maxPrice - minPrice) / 10;
+            
+            priceRange = [];
+            for (let i = 0; i <= 10; i++) {
+                const price = minPrice + (step * i);
+                const margin = ((price - processingCostCOP) / price) * 100;
+                const annualProfit = (price - processingCostCOP) * annualVolume;
+                priceRange.push({
+                    price: Math.round(price),
+                    margin: Math.round(margin * 10) / 10,
+                    annualProfit: Math.round(annualProfit / 1000000) // En millones
+                });
+            }
+        }
+        
+        // Función para actualizar la interfaz de usuario
+        function updateUI() {
+            // Actualizar valores de deslizadores
+            currentPriceValue.textContent = formatCurrency(currentPrice);
+            targetPriceValue.textContent = formatCurrency(targetPrice);
+            hourlyProcessingCostValue.textContent = '$ ' + hourlyProcessingCost.toFixed(2);
+            exchangeRateValue.textContent = exchangeRate.toLocaleString();
+            hoursPerVideoValue.textContent = hoursPerVideo + ' horas';
+            annualProjectsValue.textContent = annualProjects.toString();
+            stationsPerProjectValue.textContent = stationsPerProject.toString();
+            
+            // Actualizar resultados
+            processingCostElement.textContent = formatCurrency(processingCostCOP) + ' (' + (hoursPerVideo * hourlyProcessingCost) + ' USD)';
+            annualVolumeElement.textContent = annualVolume + ' estaciones de ' + hoursPerVideo + 'h';
+            
+            currentMarginElement.textContent = formatPercent(currentMargin);
+            currentMarginElement.className = currentMargin > 50 ? 'green' : 'yellow';
+            
+            targetMarginElement.textContent = formatPercent(targetMargin);
+            targetMarginElement.className = targetMargin > 50 ? 'green' : 'yellow';
+            
+            currentAnnualProfitElement.textContent = formatCurrency(currentAnnualProfit);
+            targetAnnualProfitElement.textContent = formatCurrency(targetAnnualProfit);
+            
+            // Actualizar tabla
+            tableBody.innerHTML = '';
+            priceRange.forEach(item => {
+                const row = document.createElement('tr');
+                
+                const priceCell = document.createElement('td');
+                priceCell.textContent = formatCurrency(item.price);
+                row.appendChild(priceCell);
+                
+                const marginCell = document.createElement('td');
+                marginCell.textContent = formatPercent(item.margin);
+                row.appendChild(marginCell);
+                
+                const profitCell = document.createElement('td');
+                profitCell.textContent = item.annualProfit.toLocaleString() + ' M';
+                row.appendChild(profitCell);
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Actualizar gráfico
+            drawChart();
+        }
+        
+        // Función para dibujar el gráfico
+        function drawChart() {
+            // Limpiar canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Márgenes del gráfico
+            const margin = {
+                top: 40,
+                right: 60,
+                bottom: 60,
+                left: 60
+            };
+            
+            // Dimensiones útiles
+            const width = canvas.width - margin.left - margin.right;
+            const height = canvas.height - margin.top - margin.bottom;
+            
+            // Escala para eje X (precios)
+            const xMin = Math.min(...priceRange.map(d => d.price));
+            const xMax = Math.max(...priceRange.map(d => d.price));
+            const xScale = value => margin.left + ((value - xMin) / (xMax - xMin)) * width;
+            
+            // Escala para eje Y1 (márgenes)
+            const y1Min = 0;
+            const y1Max = 100;
+            const y1Scale = value => margin.top + height - ((value - y1Min) / (y1Max - y1Min)) * height;
+            
+            // Escala para eje Y2 (ganancias)
+            const y2Min = 0;
+            const y2Max = Math.max(...priceRange.map(d => d.annualProfit)) * 1.1;
+            const y2Scale = value => margin.top + height - ((value - y2Min) / (y2Max - y2Min)) * height;
+            
+            // Dibujar ejes
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1;
+            
+            // Eje X
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top + height);
+            ctx.lineTo(margin.left + width, margin.top + height);
+            ctx.stroke();
+            
+            // Etiquetas eje X
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = '#64748b';
+            ctx.font = '12px sans-serif';
+            
+            // Número de marcas en el eje X
+            const xTicks = 6;
+            for (let i = 0; i <= xTicks; i++) {
+                const value = xMin + (i / xTicks) * (xMax - xMin);
+                const x = xScale(value);
+                
+                // Línea de marca
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top + height);
+                ctx.lineTo(x, margin.top + height + 5);
+                ctx.stroke();
+                
+                // Etiqueta
+                ctx.fillText((value / 1000000).toFixed(1) + 'M', x, margin.top + height + 10);
+            }
+            
+            // Título eje X
+            ctx.font = '14px sans-serif';
+            ctx.fillText('Precio (Millones COP)', margin.left + width / 2, margin.top + height + 40);
+            
+            // Eje Y1 (margen)
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, margin.top + height);
+            ctx.stroke();
+            
+            // Etiquetas eje Y1
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            
+            for (let i = 0; i <= 10; i++) {
+                const value = i * 10;
+                const y = y1Scale(value);
+                
+                // Línea de marca
+                ctx.beginPath();
+                ctx.moveTo(margin.left - 5, y);
+                ctx.lineTo(margin.left, y);
+                ctx.stroke();
+                
+                // Etiqueta
+                ctx.fillText(value + '%', margin.left - 10, y);
+            }
+            
+            // Título eje Y1
+            ctx.save();
+            ctx.translate(margin.left - 40, margin.top + height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText('Margen (%)', 0, 0);
+            ctx.restore();
+            
+            // Eje Y2 (ganancia)
+            ctx.beginPath();
+            ctx.moveTo(margin.left + width, margin.top);
+            ctx.lineTo(margin.left + width, margin.top + height);
+            ctx.stroke();
+            
+            // Etiquetas eje Y2
+            ctx.textAlign = 'left';
+            
+            const y2Ticks = 5;
+            for (let i = 0; i <= y2Ticks; i++) {
+                const value = (i / y2Ticks) * y2Max;
+                const y = y2Scale(value);
+                
+                // Línea de marca
+                ctx.beginPath();
+                ctx.moveTo(margin.left + width, y);
+                ctx.lineTo(margin.left + width + 5, y);
+                ctx.stroke();
+                
+                // Etiqueta
+                ctx.fillText(Math.round(value).toLocaleString() + 'M', margin.left + width + 10, y);
+            }
+            
+            // Título eje Y2
+            ctx.save();
+            ctx.translate(margin.left + width + 50, margin.top + height / 2);
+            ctx.rotate(Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText('Ganancia Anual (M COP)', 0, 0);
+            ctx.restore();
+            
+            // Líneas de cuadrícula
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.setLineDash([5, 5]);
+            
+            for (let i = 1; i <= 10; i++) {
+                const y = y1Scale(i * 10);
+                
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(margin.left + width, y);
+                ctx.stroke();
+            }
+            
+            ctx.setLineDash([]);
+            
+            // Dibujar línea de margen
+            ctx.beginPath();
+            ctx.strokeStyle = '#8884d8';
+            ctx.lineWidth = 3;
+            
+            priceRange.forEach((point, i) => {
+                const x = xScale(point.price);
+                const y = y1Scale(point.margin);
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.stroke();
+            
+            // Dibujar línea de ganancia
+            ctx.beginPath();
+            ctx.strokeStyle = '#82ca9d';
+            ctx.lineWidth = 3;
+            
+            priceRange.forEach((point, i) => {
+                const x = xScale(point.price);
+                const y = y2Scale(point.annualProfit);
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            });
+            
+            ctx.stroke();
+            
+            // Leyenda
+            const legendX = margin.left + 20;
+            const legendY = margin.top + 20;
+            
+            // Margen
+            ctx.fillStyle = '#8884d8';
+            ctx.fillRect(legendX, legendY, 20, 10);
+            
+            ctx.fillStyle = '#64748b';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Margen (%)', legendX + 30, legendY + 5);
+            
+            // Ganancia
+            ctx.fillStyle = '#82ca9d';
+            ctx.fillRect(legendX, legendY + 20, 20, 10);
+            
+            ctx.fillStyle = '#64748b';
+            ctx.fillText('Ganancia Anual (M)', legendX + 30, legendY + 25);
+        }
+        
+        // Eventos para deslizadores
+        currentPriceSlider.addEventListener('input', function() {
+            currentPrice = parseInt(this.value);
+            if (targetPrice > currentPrice) {
+                targetPrice = currentPrice;
+                targetPriceSlider.value = targetPrice;
+            }
+            calculateValues();
+            updateUI();
+        });
+        
+        targetPriceSlider.addEventListener('input', function() {
+            targetPrice = parseInt(this.value);
+            if (targetPrice > currentPrice) {
+                targetPrice = currentPrice;
+                this.value = targetPrice;
+            }
+            calculateValues();
+            updateUI();
+        });
+        
+        hourlyProcessingCostSlider.addEventListener('input', function() {
+            hourlyProcessingCost = parseFloat(this.value);
+            calculateValues();
+            updateUI();
+        });
+        
+        exchangeRateSlider.addEventListener('input', function() {
+            exchangeRate = parseInt(this.value);
+            calculateValues();
+            updateUI();
+        });
+        
+        hoursPerVideoSlider.addEventListener('input', function() {
+            hoursPerVideo = parseInt(this.value);
+            calculateValues();
+            updateUI();
+        });
+        
+        annualProjectsSlider.addEventListener('input', function() {
+            annualProjects = parseInt(this.value);
+            calculateValues();
+            updateUI();
+        });
+        
+        stationsPerProjectSlider.addEventListener('input', function() {
+            stationsPerProject = parseInt(this.value);
+            calculateValues();
+            updateUI();
+        });
+        
+        // Inicialización
+        function init() {
+            // Establecer límites de deslizadores
+            targetPriceSlider.max = currentPrice;
+            
+            // Calcular valores iniciales
+            calculateValues();
+            updateUI();
+            
+            // Ajustar canvas para dispositivos de alta densidad de píxeles
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            ctx.scale(dpr, dpr);
+            
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+        }
+        
+        // Iniciar cuando el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // Ajustar cuando cambia el tamaño de la ventana
+        window.addEventListener('resize', function() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            ctx.scale(dpr, dpr);
+            
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            drawChart();
+        });
+    </script>
+</body>
+</html>
